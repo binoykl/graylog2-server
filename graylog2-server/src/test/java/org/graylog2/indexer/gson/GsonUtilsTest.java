@@ -16,18 +16,23 @@
  */
 package org.graylog2.indexer.gson;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.LongNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GsonUtilsTest {
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
-    public void asJsonObject() throws Exception {
-        final JsonObject jsonObject = new JsonObject();
+    public void asJsonNode() throws Exception {
+        final JsonNode jsonObject = objectMapper.createObjectNode();
         assertThat(GsonUtils.asJsonObject(jsonObject)).isEqualTo(jsonObject);
     }
 
@@ -38,13 +43,13 @@ public class GsonUtilsTest {
 
     @Test
     public void asJsonObjectWithIncorrectType() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive("test");
+        final JsonNode jsonPrimitive = new TextNode("test");
         assertThat(GsonUtils.asJsonObject(jsonPrimitive)).isNull();
     }
 
     @Test
     public void asJsonArray() throws Exception {
-        final JsonArray jsonArray = new JsonArray();
+        final JsonNode jsonArray = objectMapper.createArrayNode();
         assertThat(GsonUtils.asJsonArray(jsonArray)).isEqualTo(jsonArray);
     }
 
@@ -55,13 +60,13 @@ public class GsonUtilsTest {
 
     @Test
     public void asJsonArrayWithIncorrectType() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive("test");
+        final JsonNode jsonPrimitive = new TextNode("test");
         assertThat(GsonUtils.asJsonArray(jsonPrimitive)).isNull();
     }
 
     @Test
     public void asString() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive("test");
+        final JsonNode jsonPrimitive = new TextNode("test");
         assertThat(GsonUtils.asString(jsonPrimitive)).isEqualTo("test");
     }
 
@@ -72,13 +77,13 @@ public class GsonUtilsTest {
 
     @Test
     public void asStringWithIncorrectType() throws Exception {
-        final JsonObject jsonObject = new JsonObject();
+        final JsonNode jsonObject = new IntNode(42);
         assertThat(GsonUtils.asString(jsonObject)).isNull();
     }
 
     @Test
     public void asBoolean() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive(false);
+        final JsonNode jsonPrimitive = BooleanNode.FALSE;
         assertThat(GsonUtils.asBoolean(jsonPrimitive)).isFalse();
     }
 
@@ -89,13 +94,13 @@ public class GsonUtilsTest {
 
     @Test
     public void asBooleanWithIncorrectType() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive("test");
+        final JsonNode jsonPrimitive = new TextNode("test");
         assertThat(GsonUtils.asBoolean(jsonPrimitive)).isNull();
     }
 
     @Test
     public void asLong() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive(42L);
+        final JsonNode jsonPrimitive = new LongNode(42L);
         assertThat(GsonUtils.asLong(jsonPrimitive)).isEqualTo(42L);
     }
 
@@ -106,13 +111,13 @@ public class GsonUtilsTest {
 
     @Test
     public void asLongWithIncorrectType() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive("test");
+        final JsonNode jsonPrimitive = new TextNode("test");
         assertThat(GsonUtils.asLong(jsonPrimitive)).isNull();
     }
 
     @Test
     public void asInteger() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive(42);
+        final JsonNode jsonPrimitive = new IntNode(42);
         assertThat(GsonUtils.asInteger(jsonPrimitive)).isEqualTo(42);
     }
 
@@ -123,19 +128,19 @@ public class GsonUtilsTest {
 
     @Test
     public void asIntegerWithIncorrectType() throws Exception {
-        final JsonPrimitive jsonPrimitive = new JsonPrimitive("test");
+        final JsonNode jsonPrimitive = new TextNode("test");
         assertThat(GsonUtils.asInteger(jsonPrimitive)).isNull();
     }
 
     @Test
     public void entrySetAsMap() throws Exception {
-        final JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("foo", "bar");
-        jsonObject.addProperty("question", 42);
+        final ObjectNode jsonObject = objectMapper.createObjectNode();
+        jsonObject.set("foo", new TextNode("bar"));
+        jsonObject.set("question", new IntNode(42));
 
         assertThat(GsonUtils.entrySetAsMap(jsonObject))
-                .containsEntry("foo", new JsonPrimitive("bar"))
-                .containsEntry("question", new JsonPrimitive(42));
+                .containsEntry("foo", new TextNode("bar"))
+                .containsEntry("question", new IntNode(42));
     }
 
     @Test
@@ -145,17 +150,17 @@ public class GsonUtilsTest {
 
     @Test
     public void asMap() throws Exception {
-        final JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("foo", "bar");
-        jsonObject.addProperty("question", 42L);
+        final ObjectNode jsonObject = objectMapper.createObjectNode();
+        jsonObject.set("foo", new TextNode("bar"));
+        jsonObject.set("question", new IntNode(42));
 
-        assertThat(GsonUtils.asMap(new Gson(), jsonObject))
+        assertThat(GsonUtils.asMap(objectMapper, jsonObject))
                 .containsEntry("foo", "bar")
-                .containsEntry("question", 42.0D);
+                .containsEntry("question", 42);
     }
 
     @Test
     public void asMapWithNull() throws Exception {
-        assertThat(GsonUtils.asMap(new Gson(), null)).isNull();
+        assertThat(GsonUtils.asMap(objectMapper, null)).isNull();
     }
 }

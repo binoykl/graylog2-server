@@ -16,65 +16,64 @@
  */
 package org.graylog2.indexer.gson;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 public final class GsonUtils {
 
-    public static final Type MAP_STRING_OBJECT_TYPE = new TypeToken<Map<String, Object>>() {
-    }.getType();
+    public static final TypeReference MAP_STRING_OBJECT_TYPE = new TypeReference<Map<String, Object>>() {
+    };
 
     private GsonUtils() {
     }
 
     @Nullable
-    public static JsonObject asJsonObject(JsonElement jsonElement) {
-        return jsonElement instanceof JsonObject ? (JsonObject) jsonElement : null;
+    public static ObjectNode asJsonObject(JsonNode jsonElement) {
+        return jsonElement != null && jsonElement.isObject() ? (ObjectNode) jsonElement : null;
     }
 
     @Nullable
-    public static JsonArray asJsonArray(JsonElement jsonElement) {
-        return jsonElement instanceof JsonArray ? (JsonArray) jsonElement : null;
+    public static ArrayNode asJsonArray(JsonNode jsonElement) {
+        return jsonElement != null && jsonElement.isArray() ? (ArrayNode) jsonElement : null;
     }
 
     @Nullable
-    public static String asString(JsonElement jsonElement) {
-        return jsonElement instanceof JsonPrimitive ? jsonElement.getAsString() : null;
+    public static String asString(JsonNode jsonElement) {
+        return jsonElement != null && jsonElement.isTextual() ? jsonElement.asText() : null;
     }
 
     @Nullable
-    public static Boolean asBoolean(JsonElement jsonElement) {
-        return jsonElement instanceof JsonPrimitive && ((JsonPrimitive) jsonElement).isBoolean() ? jsonElement.getAsBoolean() : null;
+    public static Boolean asBoolean(JsonNode jsonElement) {
+        return jsonElement != null && jsonElement.isBoolean() ? jsonElement.asBoolean() : null;
     }
 
     @Nullable
-    public static Long asLong(JsonElement jsonElement) {
-        return jsonElement instanceof JsonPrimitive && ((JsonPrimitive) jsonElement).isNumber() ? jsonElement.getAsLong() : null;
+    public static Long asLong(JsonNode jsonElement) {
+        return jsonElement != null && jsonElement.isLong() ? jsonElement.asLong() : null;
     }
 
     @Nullable
-    public static Integer asInteger(JsonElement jsonElement) {
-        return jsonElement instanceof JsonPrimitive && ((JsonPrimitive) jsonElement).isNumber() ? jsonElement.getAsInt() : null;
+    public static Integer asInteger(JsonNode jsonElement) {
+        return jsonElement != null && jsonElement.isInt() ? jsonElement.asInt() : null;
     }
 
     @Nullable
-    public static Map<String, JsonElement> entrySetAsMap(JsonObject jsonObject) {
+    public static Map<String, JsonNode> entrySetAsMap(JsonNode jsonObject) {
         if (jsonObject == null) {
             return null;
         } else {
-            final ImmutableMap.Builder<String, JsonElement> mapBuilder = ImmutableMap.builder();
-            final Set<Map.Entry<String, JsonElement>> entrySet = jsonObject.entrySet();
-            for (Map.Entry<String, JsonElement> entry : entrySet) {
+            final ImmutableMap.Builder<String, JsonNode> mapBuilder = ImmutableMap.builder();
+            final Iterator<Map.Entry<String, JsonNode>> entrySet = jsonObject.fields();
+            while (entrySet.hasNext()) {
+                Map.Entry<String, JsonNode> entry = entrySet.next();
                 mapBuilder.put(entry.getKey(), entry.getValue());
             }
             return mapBuilder.build();
@@ -82,7 +81,7 @@ public final class GsonUtils {
     }
 
     @Nullable
-    public static Map<String, Object> asMap(Gson gson, JsonObject jsonObject) {
-        return gson.fromJson(jsonObject, MAP_STRING_OBJECT_TYPE);
+    public static Map<String, Object> asMap(ObjectMapper objectMapper, JsonNode jsonObject) {
+        return objectMapper.convertValue(jsonObject, MAP_STRING_OBJECT_TYPE);
     }
 }
